@@ -1,7 +1,7 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include < .h>
+#include <QMC5883LCompass.h>
 #include <TinyGPS++.h>
 #include <Adafruit_BMP280.h>
 #include <Adafruit_MPU6050.h>
