@@ -116,6 +116,7 @@ void setup() {
 void loop() {
   readSensors();
   displaySensorData();
+  delay(50000);
   steerToTarget(); // <- PD Steering logic
 
   if (millis() - lastLogTime >= LOG_INTERVAL) {
@@ -126,77 +127,13 @@ void loop() {
   smartDelay(200);
 }
 
-// --- Bearing Calculation ---
-float calculateBearing(float lat1, float lon1, float lat2, float lon2) {
-  float dLon = radians(lon2 - lon1);
-  float y = sin(dLon) * cos(radians(lat2));
-  float x = cos(radians(lat1)) * sin(radians(lat2)) - sin(radians(lat1)) * cos(radians(lat2)) * cos(dLon);
-  float brng = atan2(y, x);
-  brng = degrees(brng);
-  if (brng < 0) brng += 360;
-  return brng;
-}
 
-// --- PD Steering Control ---
-int calculateSteeringAngle(float targetBearing, float currentHeading) {
-  float error = targetBearing - currentHeading;
-  if (error > 180) error -= 360;
-  if (error < -180) error += 360;
-
-  float derivative = error - lastError;
-  lastError = error;
-
-  float control = Kp * error + Kd * derivative;
-
-  int angle = 90 + control;
-  angle = constrain(angle, 45, 135); // Safe range
-  return angle;
-}
-
-void steerToTarget() {
-  if (gps.location.isValid()) {
-    float currentLat = gps.location.lat();
-    float currentLon = gps.location.lng();
-    float currentHeading = qmc.getAzimuth();
-
-    float targetBearing = calculateBearing(currentLat, currentLon, targetLat, targetLon);
-    int servoAngle = calculateSteeringAngle(targetBearing, currentHeading);
-
-    // Apply same angle to both since they're side-swapped
-    servoLeft.write(servoAngle);
-    servoRight.write(servoAngle);
-  }
-}
 
 void readSensors() {
   qmc.read();
   while (Serial1.available()) gps.encode(Serial1.read());
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
-}
-
-void displaySensorData() {
-  int azimuth = qmc.getAzimuth();
-  float latitude = gps.location.isValid() ? gps.location.lat() : 0;
-  float longitude = gps.location.isValid() ? gps.location.lng() : 0;
-
-  sensors_event_t a, g, temp;
-  mpu.getEvent(&a, &g, &temp);
-  float roll = atan2(a.acceleration.y, a.acceleration.z) * 180.0 / PI;
-  float pitch = atan2(-a.acceleration.x, sqrt(a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z)) * 180.0 / PI;
-  float filteredPitch = kalmanPitch.updateEstimate(pitch);
-  float filteredRoll = kalmanRoll.updateEstimate(roll);
-  float bmpAltitude = bmp.readAltitude(SEALEVELPRESSURE_HPA);
-
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.print(F("Az: ")); display.println(azimuth);
-  display.print(F("Lat: ")); display.println(latitude, 4);
-  display.print(F("Lon: ")); display.println(longitude, 4);
-  display.print(F("Pit: ")); display.print(filteredPitch);
-  display.print(F(" Rol: ")); display.println(filteredRoll);
-  display.print(F("Alt: ")); display.println(bmpAltitude);
-  display.display();
 }
 
 static void smartDelay(unsigned long ms) {
