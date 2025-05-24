@@ -1,7 +1,7 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <QMC5883LCompass.h>
+#include < .h>
 #include <TinyGPS++.h>
 #include <Adafruit_BMP280.h>
 #include <Adafruit_MPU6050.h>
@@ -11,7 +11,7 @@
 #include <SD.h>
 #include <Adafruit_NeoPixel.h>
 #include <RH_RF95.h> // For RFM95
-#include <servo.h>
+#include <Servo.h>
 
 // --- OLED Setup ---
 #define SCREEN_WIDTH 128
@@ -340,21 +340,21 @@ void logData() {
         delay(2000);
     }
 }
-void sendData(String data) {
-  // Convert String to char array.
-  char messageToSend[data.length() + 1];
-  data.toCharArray(messageToSend, sizeof(messageToSend));
+// void sendData(String data) {
+//   // Convert String to char array.
+//   char messageToSend[data.length() + 1];
+//   data.toCharArray(messageToSend, sizeof(messageToSend));
 
-  // Send message
-  rf95.send((uint8_t *)messageToSend, sizeof(messageToSend));
-  rf95.waitPacketSent(); // Wait for transmission to complete
-  Serial.print("Sent");
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("Sent: " + String(messageToSend));
+//   // Send message
+//   rf95.send((uint8_t *)messageToSend, sizeof(messageToSend));
+//   rf95.waitPacketSent(); // Wait for transmission to complete
+//   Serial.print("Sent");
+//   display.clearDisplay();
+//   display.setCursor(0, 0);
+//   display.println("Sent: " + String(messageToSend));
   
-  display.display();
-}
+//   display.display();
+// }
 
 static void smartDelay(unsigned long ms) {
   unsigned long start = millis();
