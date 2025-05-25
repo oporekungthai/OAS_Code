@@ -13,11 +13,16 @@ void displaySensorData() {
 
   display.clearDisplay();
   display.setCursor(0, 0);
-  display.print(F("Az: ")); display.println(azimuth);
-  display.print(F("Lat: ")); display.println(latitude, 4);
-  display.print(F("Lon: ")); display.println(longitude, 4);
-  display.print(F("Pit: ")); display.print(filteredPitch);
-  display.print(F(" Rol: ")); display.println(filteredRoll);
-  display.print(F("Alt: ")); display.println(bmpAltitude);
+  display.setTextSize(0.3);
+
+  // display.print(F("Az: ")); display.print(azimuth);
+  // display.print(F(" Alt:")); display.println(bmpAltitude, 0);
+
+  display.print(F("Lat:")); display.println(latitude, 4);
+  display.print(F("Lon:")); display.println(longitude, 4);
+
+  display.print(F("TgtL:")); display.println(targetLat, 4);
+  display.print(F("TgtN:")); display.print(targetLon, 4);
+
   display.display();
 }

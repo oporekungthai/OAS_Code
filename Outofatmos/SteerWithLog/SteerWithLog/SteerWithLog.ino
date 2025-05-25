@@ -18,10 +18,21 @@ Servo servoLeft;
 Servo servoRight;
 #define SERVO_LEFT_PIN 11
 #define SERVO_RIGHT_PIN 12
+// ================================================================
+// Shooting Target lockheed martin position we boutta invade russia with this one
+float targetLat = 0;
+float targetLon = 0;
+#define BUTTON_PIN 10
+bool buttonPressed = false;
 
-// --- Target GPS Coordinates ---
-const float targetLat = 18.796168;  // Example target
-const float targetLon = 98.979263;
+// Target Init configurations
+
+unsigned long targetSetTime = 0;
+bool targetSelected = false;
+bool steeringStarted = false;
+const unsigned long STEER_DELAY = 45000; 
+
+// ================================================================
 
 // --- PD Control Constants ---
 float Kp = 1.2;
@@ -54,6 +65,14 @@ SimpleKalmanFilter kalmanRoll(1, 1, 0.01);
 // --- SD Card ---
 #define SD_CS_PIN 25
 
+// --- File Naming and Logging Interval ---
+const unsigned long LOG_INTERVAL = 5000;     // Log every 5 seconds
+const unsigned long FILE_INTERVAL = 10000;     // Log every 5 seconds
+unsigned long lastLogTime = 0;
+unsigned long fileStartTime = 0;
+unsigned long logCounter = 0;
+unsigned long fileNumber = 0; // For creating unique filenames
+
 // --- NeoPixel ---
 #define NEOPIXEL_PIN 4
 #define NUMPIXELS 1
@@ -62,6 +81,13 @@ const uint32_t PXRED = pixels.Color(255, 0, 0);
 const uint32_t PXGREEN = pixels.Color(0, 255, 0);
 const uint32_t PXBLUE = pixels.Color(0, 0, 255);
 const uint32_t PXBLACK = pixels.Color(0, 0, 0);
+const uint32_t PXWHITE = pixels.Color(255, 255, 255);
+const uint32_t PXYELLOW = pixels.Color(255, 255, 0);
+// blinking ting tong
+bool yellowBlinkState = false;
+unsigned long lastBlinkTime = 0;
+const unsigned long BLINK_INTERVAL = 500;  // Blink every 500ms
+
 
 // --- RFM95 ---
 #define RFM95_CS 16
@@ -79,9 +105,6 @@ RH_RF95 rf95(RFM95_CS, RFM95_INT);  // Create RFM95 instance
 String inputString = "";
 bool stringComplete = false;
 
-// --- Logging ---
-const unsigned long LOG_INTERVAL = 5000;
-unsigned long lastLogTime = 0;
 
 void setup() {
   pixels.begin();
@@ -89,6 +112,8 @@ void setup() {
   pixels.fill(PXBLUE);      // Blue: Initializing
   pixels.show();
   Serial.begin(115200);
+
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
 
   // --- Initialize OLED ---
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
@@ -183,10 +208,36 @@ void setup() {
 }
 
 void loop() {
+  checkButtonAndSetTarget();
   readSensors();
   displaySensorData();
   sendData(createDataString());
-  // steerToTarget();
+
+  // Blinking Yellow During Wait
+  if (targetSelected && !steeringStarted) {
+    if (millis() - targetSetTime >= STEER_DELAY) {
+      steeringStarted = true;
+      pixels.fill(PXGREEN); // Turn green when steering starts
+      pixels.show();
+    } else {
+      // Blink yellow
+      if (millis() - lastBlinkTime >= BLINK_INTERVAL) {
+        lastBlinkTime = millis();
+        yellowBlinkState = !yellowBlinkState;
+        if (yellowBlinkState) {
+          pixels.fill(PXYELLOW);
+        } else {
+          pixels.fill(PXBLACK);
+        }
+        pixels.show();
+      }
+    }
+  }
+
+  // Start steering after delay
+  if (steeringStarted) {
+    steerToTarget();
+  }
 
   if (millis() - lastLogTime >= LOG_INTERVAL) {
     lastLogTime = millis();
@@ -197,27 +248,12 @@ void loop() {
 }
 
 
-void readSensors() {
-  qmc.read();
-  while (Serial1.available()) gps.encode(Serial1.read());
-  sensors_event_t a, g, temp;
-  mpu.getEvent(&a, &g, &temp);
-}
 
 static void smartDelay(unsigned long ms) {
   unsigned long start = millis();
   do {
     while (Serial1.available()) gps.encode(Serial1.read());
   } while (millis() - start < ms);
-}
-
-void oledDisplay(const char* text) {
-    display.clearDisplay();
-    display.setCursor(0, 0);
-    display.setTextSize(1);
-    display.setTextColor(SSD1306_WHITE);
-    display.println(F(text));
-    display.display();
 }
 
 
