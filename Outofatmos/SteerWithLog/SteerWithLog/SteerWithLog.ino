@@ -35,8 +35,8 @@ const unsigned long STEER_DELAY = 45000;
 // ================================================================
 
 // --- PD Control Constants ---
-float Kp = 1.2;
-float Kd = 0.6;
+float Kp = 0.6;
+float Kd = 0.0;
 float lastError = 0;
 
 // --- OLED Setup ---
