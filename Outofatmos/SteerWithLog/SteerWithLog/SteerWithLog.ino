@@ -19,7 +19,7 @@ Servo servoRight;
 #define SERVO_LEFT_PIN 11
 #define SERVO_RIGHT_PIN 12
 // ================================================================
-// Shooting Target lockheed martin position we boutta invade russia with this one
+// Shooting Target aka. lockheed martin please fund me so that we could invade russia with this one
 float targetLat = 0;
 float targetLon = 0;
 #define BUTTON_PIN 10

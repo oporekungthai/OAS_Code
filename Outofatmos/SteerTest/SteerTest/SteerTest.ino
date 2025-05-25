@@ -17,6 +17,7 @@ SimpleKalmanFilter rollKalmanFilter(1.0, 1.0, 0.01);
 
 Servo servo1;
 Servo servo2;
+Servo servo3;
 
 void setup() {
   Serial.begin(115200);
@@ -24,8 +25,10 @@ void setup() {
   // Servos
   servo1.attach(11);
   servo2.attach(12);
+  servo3.attach(24);
   servo1.write(0);
   servo2.write(0);
+  servo3.write(180);
 
   // MPU6050
   if (!mpu.begin()) {
@@ -48,8 +51,10 @@ void setup() {
 }
 
 void loop() {
-  steerFromRoll();
-  delay(100);
+  servo1.write(180);
+  delay(2000);
+  servo1.write(0);
+  delay(2000);
 }
 
 
