@@ -18,6 +18,13 @@ Servo servoLeft;
 Servo servoRight;
 #define SERVO_LEFT_PIN 11
 #define SERVO_RIGHT_PIN 12
+
+
+
+
+
+
+
 // ================================================================
 // Shooting Target aka. lockheed martin please fund me so that we could invade russia with this one
 float targetLat = 0;
@@ -33,6 +40,13 @@ bool steeringStarted = false;
 const unsigned long STEER_DELAY = 45000; 
 
 // ================================================================
+
+
+
+// Phase String
+String currentPhase = "Waiting";
+
+
 
 // --- PD Control Constants ---
 float Kp = 0.6;
@@ -210,43 +224,58 @@ void setup() {
 void loop() {
   checkButtonAndSetTarget();
   readSensors();
-  displaySensorData();
-  sendData(createDataString());
 
-  // Blinking Yellow During Wait
-  if (targetSelected && !steeringStarted) {
-    if (millis() - targetSetTime >= STEER_DELAY) {
-      steeringStarted = true;
-      pixels.fill(PXGREEN); // Turn green when steering starts
-      pixels.show();
-    } else {
-      // Blink yellow
-      if (millis() - lastBlinkTime >= BLINK_INTERVAL) {
-        lastBlinkTime = millis();
-        yellowBlinkState = !yellowBlinkState;
-        if (yellowBlinkState) {
-          pixels.fill(PXYELLOW);
-        } else {
-          pixels.fill(PXBLACK);
-        }
-        pixels.show();
-      }
-    }
+  static bool rocketDeployed = false;
+  static bool tiltReady = false;
+  static bool cansatDeployed = false;
+  static bool steeringStarted = false;
+  static unsigned long deployTime = 0;
+
+  if (!rocketDeployed && checkDeployment()) {
+    rocketDeployed = true;
+    currentPhase = "Deployed";
+    sendData("Rocket Deployed");
+    logData();
   }
 
-  // Start steering after delay
+  if (rocketDeployed && !tiltReady && checkTiltDown()) {
+    tiltReady = true;
+    currentPhase = "Tilting";
+    sendData("Tilt Detected");
+    logData();
+  }
+
+  if (tiltReady && !cansatDeployed) {
+    deployCanSat();
+    cansatDeployed = true;
+    deployTime = millis();
+    currentPhase = "CanSatDeployed";
+    sendData("CanSat Deployed");
+    logData();
+  }
+
+  if (cansatDeployed && millis() - deployTime >= 3000 && !steeringStarted) {
+    steeringStarted = true;
+    currentPhase = "Steering";
+    sendData("Steering Started");
+    logData();
+  }
+
   if (steeringStarted) {
     steerToTarget();
-  }
+    sendData(createDataString());  // ✅ Real-time telemetry
 
-  if (millis() - lastLogTime >= LOG_INTERVAL) {
-    lastLogTime = millis();
-    // logData(); // Optional
+    // ✅ Only log once per LOG_INTERVAL
+    if (millis() - lastLogTime >= LOG_INTERVAL) {
+      logData();
+      lastLogTime = millis();
+    }
   }
-
+  
+  displaySensorData();
+  blinkPixelForPhase();
   smartDelay(200);
 }
-
 
 
 static void smartDelay(unsigned long ms) {
