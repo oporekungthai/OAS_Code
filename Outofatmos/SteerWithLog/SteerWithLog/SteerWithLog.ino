@@ -67,8 +67,17 @@ const uint32_t PXBLACK = pixels.Color(0, 0, 0);
 #define RFM95_CS 16
 #define RFM95_RST 17
 #define RFM95_INT 21
-#define RFM95_FREQ 915.0
-RH_RF95 rf95(RFM95_CS, RFM95_INT);
+#define RFM95_FREQ 921.325
+
+// --- Network Configuration ---
+#define CLIENT_ADDRESS     1  // Address of this client (RP2040)
+#define SERVER_ADDRESS     2  // Address of the server (ESP32)
+
+RH_RF95 rf95(RFM95_CS, RFM95_INT);  // Create RFM95 instance
+
+// --- for receive data from server ---
+String inputString = "";
+bool stringComplete = false;
 
 // --- Logging ---
 const unsigned long LOG_INTERVAL = 5000;
@@ -76,34 +85,94 @@ unsigned long lastLogTime = 0;
 
 void setup() {
   pixels.begin();
-  pixels.setBrightness(50);
-  pixels.fill(PXBLUE); pixels.show();
+  pixels.setBrightness(50); // Set brightness
+  pixels.fill(PXBLUE);      // Blue: Initializing
+  pixels.show();
   Serial.begin(115200);
 
-  Wire.begin();
-  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) while (1);
-  display.display(); delay(1000); display.clearDisplay();
+  // --- Initialize OLED ---
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    pixels.fill(PXRED); // Red for OLED failure
+    pixels.show();
+    while (1) delay(10);
+  }
+  display.display();
+  delay(1000);
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
 
+  // --- Initialize I2C ---
+  Wire.begin();
+
+  // --- Initialize QMC5883L ---
   qmc.init();
-  if (!bmp.begin()) while (1);
-  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL, Adafruit_BMP280::SAMPLING_X2,
-                  Adafruit_BMP280::SAMPLING_X16, Adafruit_BMP280::FILTER_X16,
+
+  // --- Initialize BMP280 ---
+  if (!bmp.begin()) {
+    pixels.fill(PXRED); // Red for BMP280 failure
+    pixels.show();
+    while (1) delay(10);
+  }
+  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,
+                  Adafruit_BMP280::SAMPLING_X2,
+                  Adafruit_BMP280::SAMPLING_X16,
+                  Adafruit_BMP280::FILTER_X16,
                   Adafruit_BMP280::STANDBY_MS_500);
 
-  if (!mpu.begin(MPU6050_ADDRESS)) while (1);
+  // --- Initialize MPU6050 ---
+  if (!mpu.begin(MPU6050_ADDRESS)) {
+    pixels.fill(PXRED); // Red for MPU6050 failure
+    pixels.show();
+    while (1) delay(10);
+  }
   mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
   mpu.setGyroRange(MPU6050_RANGE_500_DEG);
   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
 
-  Serial1.setRX(1); Serial1.setTX(0); Serial1.begin(GPSBaud);
-  if (!SD.begin(SD_CS_PIN)) while (1);
+  // --- Initialize GPS (Serial1 on GPIO0/1) ---
+  Serial1.setRX(1);
+  Serial1.setTX(0);
+  Serial1.begin(GPSBaud);
 
+  // --- Initialize SD Card ---
+  if (!SD.begin(SD_CS_PIN)) {
+    pixels.fill(PXRED); // Red for SD Card failure
+    pixels.show();
+    while (1) delay(10);
+  }
+
+// --- RFM95 Initialization ---
   pinMode(RFM95_RST, OUTPUT);
-  digitalWrite(RFM95_RST, LOW); delay(10);
-  digitalWrite(RFM95_RST, HIGH); delay(10);
-  if (!rf95.init()) while (1);
-  rf95.setFrequency(RFM95_FREQ);
-  rf95.setTxPower(23, false);
+  digitalWrite(RFM95_RST, LOW);
+  delay(10);
+  digitalWrite(RFM95_RST, HIGH);
+  delay(10);
+
+  if (!rf95.init()) {
+    oledDisplay("RFM95 Init Fail"); // Display error on OLED
+    pixels.fill(PXRED); // Red for RFM95 failure
+    pixels.show();
+    while (1);
+  }
+
+  rf95.setFrequency(RFM95_FREQ); // Set frequency
+  rf95.setTxPower(23, false);     // Set transmit power (+23 dBm, high power)
+  rf95.spiWrite(0x1D, 0x78);      // BW 125 kHz, CR 4/5 (Explicit Header)
+  rf95.spiWrite(0x1E, 0x94);      // SF9, CRC OFF if on then 94
+  rf95.spiWrite(0x39, 0x34); // Set Sync Word High Byte to 0x34
+  rf95.spiWrite(0x3A, 0x44); // Set Sync Word Low Byte to 0x44
+
+  
+
+
+  rf95.setFrequency(RFM95_FREQ); // Set frequency
+  rf95.setTxPower(23, false);     // Set transmit power (+23 dBm, high power)
+  rf95.spiWrite(0x1D, 0x78);      // BW 125 kHz, CR 4/5 (Explicit Header)
+  rf95.spiWrite(0x1E, 0x94);      // SF9, CRC OFF if on then 94
+  rf95.spiWrite(0x39, 0x34); // Set Sync Word High Byte to 0x34
+  rf95.spiWrite(0x3A, 0x44); // Set Sync Word Low Byte to 0x44
+  // the syncword is 0x3444
 
   servoLeft.attach(SERVO_LEFT_PIN);
   servoRight.attach(SERVO_RIGHT_PIN);
@@ -116,8 +185,8 @@ void setup() {
 void loop() {
   readSensors();
   displaySensorData();
-  delay(50000);
-  steerToTarget(); // <- PD Steering logic
+  sendData(createDataString());
+  // steerToTarget();
 
   if (millis() - lastLogTime >= LOG_INTERVAL) {
     lastLogTime = millis();
@@ -126,7 +195,6 @@ void loop() {
 
   smartDelay(200);
 }
-
 
 
 void readSensors() {
@@ -142,3 +210,14 @@ static void smartDelay(unsigned long ms) {
     while (Serial1.available()) gps.encode(Serial1.read());
   } while (millis() - start < ms);
 }
+
+void oledDisplay(const char* text) {
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    display.println(F(text));
+    display.display();
+}
+
+

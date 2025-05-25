@@ -1,7 +1,7 @@
 void displaySensorData() {
   int azimuth = qmc.getAzimuth();
-  float latitude = gps.location.isValid() ? gps.location.lat() : 0;
-  float longitude = gps.location.isValid() ? gps.location.lng() : 0;
+  double latitude = gps.location.isValid() ? gps.location.lat() : 0;
+  double longitude = gps.location.isValid() ? gps.location.lng() : 0;
 
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
