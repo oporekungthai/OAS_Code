@@ -11,8 +11,13 @@ bool checkDeployment() {
 bool checkTiltDown() {
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
-  float pitch = atan2(-a.acceleration.x, sqrt(a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z)) * 180.0 / PI;
-  return abs(pitch) > 45; // Tune threshold
+
+  // Calculate raw pitch angle in degrees
+  float rawPitch = atan2(-a.acceleration.x, sqrt(a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z)) * 180.0 / PI;
+  // Filter the pitch angle with Kalman filter
+  float filteredPitch = kalmanPitch.updateEstimate(rawPitch);
+  // Check if filtered pitch exceeds threshold
+  return abs(filteredPitch) > 45; // Tune threshold as needed
 }
 
 void deployCanSat() {

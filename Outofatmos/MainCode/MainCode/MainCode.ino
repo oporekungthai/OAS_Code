@@ -231,12 +231,13 @@ void loop() {
   static bool steeringStarted = false;
   static unsigned long deployTime = 0;
 
-  if (!rocketDeployed && checkDeployment()) {
+  if (targetSelected && !rocketDeployed && checkDeployment()) {
     rocketDeployed = true;
     currentPhase = "Deployed";
     sendData("Rocket Deployed");
     logData();
   }
+
 
   if (rocketDeployed && !tiltReady && checkTiltDown()) {
     tiltReady = true;
