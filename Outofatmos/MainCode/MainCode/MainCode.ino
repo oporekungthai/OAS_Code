@@ -19,11 +19,29 @@ Servo servoRight;
 #define SERVO_LEFT_PIN 11
 #define SERVO_RIGHT_PIN 12
 
+// ==============================
+// DEPLOY CONFIGURATION PLEASE ADJUST CAREFULLY
+// ==============================
 
+// Enable/disable cross-checks
+#define CHECK_TILT_ANGLE    true
+#define CHECK_ACCEL_DROP    true
+#define CHECK_ALTITUDE_DROP true
+#define CHECK_MIN_TIME      true
 
+// --- Threshold values ---
+#define TILT_THRESHOLD_DEG   45.0     // Degrees
+#define ACCEL_DROP_THRESHOLD 2.0      // Gs
+#define ALTITUDE_DROP_MARGIN 2.0      // Meters (how much lower than peak before apogee is detected)
+#define MIN_TIME_SINCE_DEPLOY 3000    // ms after deployment before checking apogee
+ 
+float maxAltitude = -9999; // -9999 due to possible error ig
+unsigned long deployTime = 0; // Set this when deployment is detected
 
+// TIME FALL BACK JUST IN CASE
 
-
+#define CHECK_MAX_TIME_BEFORE_DEPLOY true
+#define MAX_TIME_BEFORE_DEPLOY 12000 // ms 
 
 // ================================================================
 // Shooting Target aka. lockheed martin please fund me so that we could invade russia with this one
@@ -233,17 +251,28 @@ void loop() {
 
   if (targetSelected && !rocketDeployed && checkDeployment()) {
     rocketDeployed = true;
+    deployTime = millis();  // ✅ record time
     currentPhase = "Deployed";
     sendData("Rocket Deployed");
     logData();
   }
 
+  if (rocketDeployed && !tiltReady) {
+    bool apogeeDetected = checkApogeeAndTilt();
+    bool timeoutReached = CHECK_MAX_TIME_BEFORE_DEPLOY && (millis() - deployTime > MAX_TIME_BEFORE_DEPLOY);
 
-  if (rocketDeployed && !tiltReady && checkTiltDown()) {
-    tiltReady = true;
-    currentPhase = "Tilting";
-    sendData("Tilt Detected");
-    logData();
+    if (apogeeDetected || timeoutReached) {
+      tiltReady = true;
+      currentPhase = "Tilting";
+      if (apogeeDetected && timeoutReached) {
+        sendData("Apogee + Timeout");
+      } else if (apogeeDetected) {
+        sendData("Apogee Reached");
+      } else {
+        sendData("Timeout Fallback Triggered");
+      }
+      logData();
+    }
   }
 
   if (tiltReady && !cansatDeployed) {
@@ -264,13 +293,13 @@ void loop() {
 
   if (steeringStarted) {
     steerToTarget();
-    sendData(createDataString());  // ✅ Real-time telemetry
+  }
 
-    // ✅ Only log once per LOG_INTERVAL
-    if (millis() - lastLogTime >= LOG_INTERVAL) {
-      logData();
-      lastLogTime = millis();
-    }
+  sendData(createDataString());
+
+  if (millis() - lastLogTime >= LOG_INTERVAL) {
+    logData();
+    lastLogTime = millis();
   }
   
   displaySensorData();
