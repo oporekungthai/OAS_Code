@@ -14,6 +14,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 // start ada and dean kalmen
 Adafruit_MPU6050 mpu;
 SimpleKalmanFilter rollKalmanFilter(1.0, 1.0, 0.01);
+SimpleKalmanFilter pitchKalmanFilter(1.0, 1.0, 0.01);
 
 Servo servo1;
 Servo servo2;
@@ -51,10 +52,7 @@ void setup() {
 }
 
 void loop() {
-  servo1.write(180);
-  delay(2000);
-  servo1.write(0);
-  delay(2000);
+  steer(35);
 }
 
 

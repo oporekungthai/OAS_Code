@@ -4,11 +4,11 @@ void steerToTarget() {
     float currentLon = gps.location.lng();
     float currentHeading = qmc.getAzimuth();
 
-    float targetBearing = calculateBearing(currentLat, currentLon, targetLat, targetLon);
-    int servoAngle = calculateSteeringAngle(targetBearing, currentHeading);
+    lastTargetBearing = calculateBearing(currentLat, currentLon, targetLat, targetLon);
+    lastServoAngle = calculateSteeringAngle(lastTargetBearing, currentHeading);
 
     // Apply same angle to both since they're side-swapped
-    servoLeft.write(servoAngle);
-    servoRight.write(servoAngle);
+    servoLeft.write(lastServoAngle);
+    servoRight.write(lastServoAngle);
   }
 }

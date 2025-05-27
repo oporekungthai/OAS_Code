@@ -33,6 +33,9 @@ bool steeringStarted = false;
 const unsigned long STEER_DELAY = 45000; 
 
 // ================================================================
+// Servo bearing
+float lastTargetBearing = 0;
+int lastServoAngle = 90; // default straight
 
 // --- PD Control Constants ---
 float Kp = 0.6;
@@ -213,28 +216,17 @@ void loop() {
   displaySensorData();
   sendData(createDataString());
 
-  // Blinking Yellow During Wait
+  // Blinking Yellow while waiting for second press to start steering
   if (targetSelected && !steeringStarted) {
-    if (millis() - targetSetTime >= STEER_DELAY) {
-      steeringStarted = true;
-      pixels.fill(PXGREEN); // Turn green when steering starts
+    if (millis() - lastBlinkTime >= BLINK_INTERVAL) {
+      lastBlinkTime = millis();
+      yellowBlinkState = !yellowBlinkState;
+      pixels.fill(yellowBlinkState ? PXYELLOW : PXBLACK);
       pixels.show();
-    } else {
-      // Blink yellow
-      if (millis() - lastBlinkTime >= BLINK_INTERVAL) {
-        lastBlinkTime = millis();
-        yellowBlinkState = !yellowBlinkState;
-        if (yellowBlinkState) {
-          pixels.fill(PXYELLOW);
-        } else {
-          pixels.fill(PXBLACK);
-        }
-        pixels.show();
-      }
     }
   }
 
-  // Start steering after delay
+  // Start steering
   if (steeringStarted) {
     steerToTarget();
   }
@@ -246,6 +238,7 @@ void loop() {
 
   smartDelay(200);
 }
+
 
 
 
