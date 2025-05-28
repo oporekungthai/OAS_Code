@@ -5,6 +5,24 @@
 #include <SimpleKalmanFilter.h>
 #include <math.h>
 
+// Deployment Apogee Configurations Test ==========
+
+
+#define TILT_THRESHOLD_DEG 45
+#define ACCEL_DROP_THRESHOLD 3.0     // Adjust based on test data
+#define ALTITUDE_DROP_MARGIN 5.0     // Meters
+#define MIN_TIME_SINCE_DEPLOY 3000   // Milliseconds
+
+// Flags to enable/disable each condition
+bool ENABLE_TILT_CHECK     = true;
+bool ENABLE_ACCEL_DROP     = true;
+bool ENABLE_ALTITUDE_DROP  = true;
+bool ENABLE_TIME_CHECK     = true;
+
+// Runtime state
+float maxAltitude = 0;
+unsigned long deployTime = 0;
+
 // --- OLED Setup ---
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 32

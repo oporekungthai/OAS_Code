@@ -5,7 +5,7 @@ bool checkDeployment() {
   float accelMagnitude = sqrt(a.acceleration.x * a.acceleration.x +
                               a.acceleration.y * a.acceleration.y +
                               a.acceleration.z * a.acceleration.z);
-  return accelMagnitude > 30.0; // please work please work i swear to god please god please i love you
+  return accelMagnitude > RELEASE_ACCEL; // please work please work i swear to god please god please i love you
 }
 
 // bool checkTiltDown() {
@@ -21,11 +21,9 @@ bool checkDeployment() {
 // }
 
 void deployCanSat() {
-  servoLeft.write(0);
-  servoRight.write(180);
+  Deployer.write(270);
   delay(1000);  // released?
-  servoLeft.write(90);
-  servoRight.write(90);
+  Deployer.write(0);
 }
 
 

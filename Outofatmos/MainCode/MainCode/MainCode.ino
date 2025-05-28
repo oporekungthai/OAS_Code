@@ -16,8 +16,10 @@
 // --- Servo Setup ---
 Servo servoLeft;
 Servo servoRight;
+Servo Deployer;
 #define SERVO_LEFT_PIN 11
 #define SERVO_RIGHT_PIN 12
+#define SERVO_DEPLOY_PIN 24
 
 // ==============================
 // DEPLOY CONFIGURATION PLEASE ADJUST CAREFULLY
@@ -25,16 +27,16 @@ Servo servoRight;
 
 // Enable/disable cross-checks
 #define CHECK_TILT_ANGLE    true
-#define CHECK_ACCEL_DROP    true
-#define CHECK_ALTITUDE_DROP true
+#define CHECK_ACCEL_DROP    false
+#define CHECK_ALTITUDE_DROP false
 #define CHECK_MIN_TIME      true
 
 // --- Threshold values ---
 #define TILT_THRESHOLD_DEG   45.0     // Degrees
-#define ACCEL_DROP_THRESHOLD 2.0      // Gs
+#define ACCEL_DROP_THRESHOLD 2.0     // Gs
 #define ALTITUDE_DROP_MARGIN 2.0      // Meters (how much lower than peak before apogee is detected)
-#define MIN_TIME_SINCE_DEPLOY 3000    // ms after deployment before checking apogee
- 
+#define MIN_TIME_SINCE_DEPLOY 10000    // ms after deployment before checking apogee
+#define RELEASE_ACCEL 30.0
 float maxAltitude = -9999; // -9999 due to possible error ig
 unsigned long deployTime = 0; // Set this when deployment is detected
 
@@ -143,7 +145,6 @@ void setup() {
   pixels.setBrightness(50); // Set brightness
   pixels.fill(PXBLUE);      // Blue: Initializing
   pixels.show();
-  Serial.begin(115200);
 
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 
@@ -220,21 +221,14 @@ void setup() {
   rf95.spiWrite(0x39, 0x34); // Set Sync Word High Byte to 0x34
   rf95.spiWrite(0x3A, 0x44); // Set Sync Word Low Byte to 0x44
 
-  
 
-
-  rf95.setFrequency(RFM95_FREQ); // Set frequency
-  rf95.setTxPower(23, false);     // Set transmit power (+23 dBm, high power)
-  rf95.spiWrite(0x1D, 0x78);      // BW 125 kHz, CR 4/5 (Explicit Header)
-  rf95.spiWrite(0x1E, 0x94);      // SF9, CRC OFF if on then 94
-  rf95.spiWrite(0x39, 0x34); // Set Sync Word High Byte to 0x34
-  rf95.spiWrite(0x3A, 0x44); // Set Sync Word Low Byte to 0x44
-  // the syncword is 0x3444
 
   servoLeft.attach(SERVO_LEFT_PIN);
   servoRight.attach(SERVO_RIGHT_PIN);
+  Deployer.attach(SERVO_DEPLOY_PIN);
   servoLeft.write(90);
   servoRight.write(90);
+  Deployer.write(0);
 
   pixels.fill(PXGREEN); pixels.show();
 }
@@ -304,15 +298,15 @@ void loop() {
   
   displaySensorData();
   blinkPixelForPhase();
-  smartDelay(200);
+  // smartDelay(200);
 }
 
 
-static void smartDelay(unsigned long ms) {
-  unsigned long start = millis();
-  do {
-    while (Serial1.available()) gps.encode(Serial1.read());
-  } while (millis() - start < ms);
-}
+// static void smartDelay(unsigned long ms) {
+//   unsigned long start = millis();
+//   do {
+//     while (Serial1.available()) gps.encode(Serial1.read());
+//   } while (millis() - start < ms);
+// }
 
 

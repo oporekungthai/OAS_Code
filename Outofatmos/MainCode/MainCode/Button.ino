@@ -25,9 +25,7 @@ void checkButtonAndSetTarget() {
       display.display();
 
       // Serial Monitor
-      Serial.println("New Target Set:");
-      Serial.print("Lat: "); Serial.println(targetLat, 6);
-      Serial.print("Lon: "); Serial.println(targetLon, 6);
+
 
       // NeoPixel flash white, then start blinking yellow
       pixels.fill(PXWHITE);
@@ -41,7 +39,7 @@ void checkButtonAndSetTarget() {
       targetSelected = true;
       steeringStarted = false;
     } else {
-      Serial.println("GPS not valid yet.");
+
     }
   }
 

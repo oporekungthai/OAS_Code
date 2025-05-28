@@ -1,3 +1,5 @@
+
+
 void displaySensorData() {
   int azimuth = qmc.getAzimuth();
   double latitude = gps.location.isValid() ? gps.location.lat() : 0;
@@ -22,17 +24,20 @@ void displaySensorData() {
   float filteredRoll = kalmanRoll.updateEstimate(roll);
   float bmpAltitude = bmp.readAltitude(SEALEVELPRESSURE_HPA);
 
+  // === Distance to target ===
+  float distanceToTarget = calculateDistance(latitude, longitude, targetLat, targetLon);
+
   display.clearDisplay();
   display.setCursor(0, 0);
   display.setTextSize(1);
 
   display.print(F("Lat:")); display.println(latitude, 4);
   // display.print(F("Lon:")); display.println(longitude, 4);
-  display.print(F("TgtL:")); display.println(targetLat, 4);
-  // display.print(F("TgtN:")); display.println(targetLon, 4);
-  // display.print(F("Azm:")); display.println(azimuth);
+  // display.print(F("TgtL:")); display.println(targetLat, 4);
   display.print(F("ToT:")); display.println((int)lastTargetBearing);
   display.print(F("Dir:")); display.println(direction);
-
+  // display.print(F("TgtN:")); display.println(targetLon, 4);
+  // display.print(F("Azm:")); display.println(azimuth);
+  display.print(F("Dist:")); display.print(distanceToTarget, 1); display.println(F(" m"));
   display.display();
 }

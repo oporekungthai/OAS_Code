@@ -12,12 +12,6 @@ void steerFromRoll() {
   // steer
   steer(rollFiltered);
 
-
-  Serial.print("Raw: ");
-  Serial.print(rollRaw);
-  Serial.print(" Filtered: ");
-  Serial.println(rollFiltered);
-
   // Show on OLED
   display.clearDisplay();
   display.setCursor(0, 0);

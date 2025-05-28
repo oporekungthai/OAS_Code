@@ -191,16 +191,6 @@ void setup() {
   rf95.spiWrite(0x39, 0x34); // Set Sync Word High Byte to 0x34
   rf95.spiWrite(0x3A, 0x44); // Set Sync Word Low Byte to 0x44
 
-  
-
-
-  rf95.setFrequency(RFM95_FREQ); // Set frequency
-  rf95.setTxPower(23, false);     // Set transmit power (+23 dBm, high power)
-  rf95.spiWrite(0x1D, 0x78);      // BW 125 kHz, CR 4/5 (Explicit Header)
-  rf95.spiWrite(0x1E, 0x94);      // SF9, CRC OFF if on then 94
-  rf95.spiWrite(0x39, 0x34); // Set Sync Word High Byte to 0x34
-  rf95.spiWrite(0x3A, 0x44); // Set Sync Word Low Byte to 0x44
-  // the syncword is 0x3444
 
   servoLeft.attach(SERVO_LEFT_PIN);
   servoRight.attach(SERVO_RIGHT_PIN);

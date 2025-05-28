@@ -4,12 +4,16 @@ String createDataString() {
 
     // === Cache GPS values ===
     float latitude = 0.0, longitude = 0.0, altitude = 0.0;
+    float gpsSpeedMps = 0.0;
     bool gpsFix = gps.location.isValid();
 
     if (gpsFix) {
         latitude = gps.location.lat();
         longitude = gps.location.lng();
         altitude = gps.altitude.meters();
+        if (gps.speed.isValid()) {
+            gpsSpeedMps = gps.speed.knots() * 0.51444; // knots to m/s
+        }
     }
 
     // === IMU readings ===
@@ -29,10 +33,22 @@ String createDataString() {
 
     float bmpAltitude = bmp.readAltitude(SEALEVELPRESSURE_HPA);
 
-    // === Calculate Bearing (if GPS is valid) ===
+    // === Calculate Bearing & Distance (if GPS is valid) ===
     float targetBearing = 0.0;
+    float distanceToTarget = 0.0;
     if (gpsFix) {
         targetBearing = calculateBearing(latitude, longitude, targetLat, targetLon);
+        distanceToTarget = calculateDistance(latitude, longitude, targetLat, targetLon);
+    }
+
+    // === Estimate vertical velocity from altitude change ===
+    float verticalVelocity = 0.0;
+    unsigned long currentTime = millis();
+    float dt = (currentTime - lastAltitudeTime) / 1000.0; // ms to sec
+    if (dt > 0.01) {
+        verticalVelocity = (altitude - lastAltitude) / dt;
+        lastAltitude = altitude;
+        lastAltitudeTime = currentTime;
     }
 
     // === Build the data string ===
@@ -53,6 +69,9 @@ String createDataString() {
     dataString += "Roll:" + String(filteredRoll, 2) + ",";
     dataString += "BmpAlt:" + String(bmpAltitude, 2) + ",";
     dataString += "Bearing:" + String(targetBearing, 2) + ",";
+    dataString += "DistToTgt:" + String(distanceToTarget, 2) + ",";
+    dataString += "Vel:" + String(verticalVelocity, 2) + ",";
+    dataString += "GpsVel:" + String(gpsSpeedMps, 2) + ",";
     dataString += "AccelMag:" + String(accelMagnitude, 2);
 
     return dataString;

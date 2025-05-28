@@ -82,7 +82,7 @@ void setup() {
   pixels.setBrightness(50); // Set brightness
   pixels.fill(PXBLUE);      // Blue: Initializing
   pixels.show();
-  Serial.begin(115200);
+ 
 
   // --- Initialize OLED ---
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
@@ -295,10 +295,9 @@ void displaySensorData() {
     }
     // MPU
     display.print(F("Pit: ")); display.print(filteredPitch);
-    Serial.print("Pit: "); Serial.print(filteredPitch);
+    
     display.print(F(" Rol: ")); display.println(filteredRoll);
-    Serial.print(" Roll: "); Serial.print(filteredRoll);
-    Serial.println("");
+   
     // BMP
     display.print(F("Alt: ")); display.println(bmpAltitude);
     

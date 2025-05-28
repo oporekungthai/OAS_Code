@@ -9,11 +9,6 @@ void steerFromPitch() {
 
   steer(pitchFiltered);
 
-  Serial.print("Raw Pitch: ");
-  Serial.print(pitchRaw);
-  Serial.print(" Filtered Pitch: ");
-  Serial.println(pitchFiltered);
-
   display.clearDisplay();
   display.setCursor(0, 0);
   display.print("Raw Pitch: ");

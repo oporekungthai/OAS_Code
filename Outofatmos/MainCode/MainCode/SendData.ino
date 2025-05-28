@@ -6,7 +6,7 @@ void sendData(String data) {
   // Send message
   rf95.send((uint8_t *)messageToSend, sizeof(messageToSend));
   rf95.waitPacketSent(); // Wait for transmission to complete
-  Serial.print("Sent");
+
   display.clearDisplay();
   display.setCursor(0, 0);
   display.println("Sent: " + String(messageToSend));
