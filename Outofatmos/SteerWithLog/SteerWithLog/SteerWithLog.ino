@@ -10,7 +10,7 @@
 #include <SPI.h>
 #include <SD.h>
 #include <Adafruit_NeoPixel.h>
-#include <RH_RF95.h>
+#include <RH_RF95.h> //y tytytty
 #include <Servo.h>
 
 // --- Servo Setup ---
@@ -69,7 +69,7 @@ SimpleKalmanFilter kalmanRoll(1, 1, 0.01);
 #define SD_CS_PIN 25
 
 // --- File Naming and Logging Interval ---
-const unsigned long LOG_INTERVAL = 5000;     // Log every 5 seconds
+const unsigned long LOG_INTERVAL = 30000;     // Log every 5 seconds
 const unsigned long FILE_INTERVAL = 10000;     // Log every 5 seconds
 unsigned long lastLogTime = 0;
 unsigned long fileStartTime = 0;
@@ -97,6 +97,8 @@ const unsigned long BLINK_INTERVAL = 500;  // Blink every 500ms
 #define RFM95_RST 17
 #define RFM95_INT 21
 #define RFM95_FREQ 921.325
+
+
 
 // --- Network Configuration ---
 #define CLIENT_ADDRESS     1  // Address of this client (RP2040)
@@ -183,49 +185,52 @@ void setup() {
     while (1);
   }
 
-  rf95.setFrequency(RFM95_FREQ); // Set frequency
-  rf95.setTxPower(23, false);     // Set transmit power (+23 dBm, high power)
-  rf95.spiWrite(0x1D, 0x78);      // BW 125 kHz, CR 4/5 (Explicit Header)
-  rf95.spiWrite(0x1E, 0x94);      // SF9, CRC OFF if on then 94
-  rf95.spiWrite(0x39, 0x34); // Set Sync Word High Byte to 0x34
-  rf95.spiWrite(0x3A, 0x44); // Set Sync Word Low Byte to 0x44
+  rf95.setFrequency(RFM95_FREQ); // 921.325 MHz
+  rf95.setTxPower(23, false);    // Max power
+  rf95.setSpreadingFactor(9);    // SF9 (can be 6–12)
+  rf95.setSignalBandwidth(125000); // 125 kHz
+  rf95.setCodingRate4(5);        // 4/5 coding rate
 
 
-  servoLeft.attach(SERVO_LEFT_PIN);
-  servoRight.attach(SERVO_RIGHT_PIN);
-  servoLeft.write(90);
-  servoRight.write(90);
+  // rf95.spiWrite(0x39, 0x34);
+
+  // servoLeft.attach(SERVO_LEFT_PIN);
+  // servoRight.attach(SERVO_RIGHT_PIN);
+  // servoLeft.write(90);
+  // servoRight.write(90);
 
   pixels.fill(PXGREEN); pixels.show();
 }
 
 void loop() {
-  checkButtonAndSetTarget();
-  readSensors();
-  displaySensorData();
-  sendData(createDataString());
+  // checkButtonAndSetTarget();
+  // // readSensors();
+  // displaySensorData();
 
   // Blinking Yellow while waiting for second press to start steering
-  if (targetSelected && !steeringStarted) {
-    if (millis() - lastBlinkTime >= BLINK_INTERVAL) {
-      lastBlinkTime = millis();
-      yellowBlinkState = !yellowBlinkState;
-      pixels.fill(yellowBlinkState ? PXYELLOW : PXBLACK);
-      pixels.show();
-    }
-  }
+  // if (targetSelected && !steeringStarted) {
+  //   if (millis() - lastBlinkTime >= BLINK_INTERVAL) {
+  //     lastBlinkTime = millis();
+  //     yellowBlinkState = !yellowBlinkState;
+  //     pixels.fill(yellowBlinkState ? PXYELLOW : PXBLACK);
+  //     pixels.show();
+  //   }
+  // }
 
-  // Start steering
-  if (steeringStarted) {
-    steerToTarget();
-  }
+  // // Start steering
+  // if (steeringStarted) {
+  //   steerToTarget();
+  // }
 
   if (millis() - lastLogTime >= LOG_INTERVAL) {
     lastLogTime = millis();
+    sendData(createDataString());
+
     // logData(); // Optional
   }
+  pixels.fill(PXBLACK); pixels.show();
 
-  // smartDelay(200);
+  smartDelay(200);
 }
 
 

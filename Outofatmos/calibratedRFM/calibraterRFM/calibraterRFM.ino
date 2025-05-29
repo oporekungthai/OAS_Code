@@ -150,12 +150,13 @@ void setup() {
     while (1);
   }
 
-  rf95.setFrequency(RFM95_FREQ); // Set frequency
-  rf95.setTxPower(23, false);     // Set transmit power (+23 dBm, high power)
-  rf95.spiWrite(0x1D, 0x78);      // BW 125 kHz, CR 4/5 (Explicit Header)
-  rf95.spiWrite(0x1E, 0x94);      // SF9, CRC OFF if on then 94
-  rf95.spiWrite(0x39, 0x34); // Set Sync Word High Byte to 0x34
-  rf95.spiWrite(0x3A, 0x44); // Set Sync Word Low Byte to 0x44
+
+  rf95.setFrequency(RFM95_FREQ); // 921.325 MHz
+  rf95.setTxPower(23, false);    // Max power
+  rf95.setSpreadingFactor(9);    // SF9 (can be 6–12)
+  rf95.setSignalBandwidth(125000); // 125 kHz
+  rf95.setCodingRate4(5);        // 4/5 coding rate
+
 
   // --- All initializations done: Green light ---
   pixels.fill(PXGREEN);  // Green = ready
@@ -185,7 +186,7 @@ void loop() {
         stringComplete = false; // Reset
     }
     // Send Data Regularly
-    
+  pixels.fill(PXWHITE);  
 
   // Feed the GPS (using smartDelay)
   smartDelay(200); // Update every 200ms, gives time for other tasks

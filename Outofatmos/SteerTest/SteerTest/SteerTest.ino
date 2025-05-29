@@ -180,24 +180,24 @@ void setup() {
 }
 
 void loop() {
-  // bool passed = checkApogeeAndTilt();
+  bool passed = checkApogeeAndTilt();
 
-  // if (passed) {
-  //   servo3.write(60);
-  //   delay(1000); // prevent re-trigger
-  // }
+  if (passed) {
+    servo3.write(60);
+    delay(1000); // prevent re-trigger
+  }
 
-  // // Determine color based on state
-  // uint32_t blinkColor = hasLaunched ? PXYELLOW : PXWHITE;
+  // Determine color based on state
+  uint32_t blinkColor = hasLaunched ? PXYELLOW : PXWHITE;
 
-  // // Blink LED if check has not passed
-  // if (millis() - lastBlinkTime >= BLINK_INTERVAL && !passed) {
-  //   lastBlinkTime = millis();
-  //   yellowBlinkState = !yellowBlinkState;
-  //   pixels.fill(yellowBlinkState ? blinkColor : PXBLACK);
-  //   pixels.show();
-  // }
-  delay(12000);
-  servo3.write(60);
+  // Blink LED if check has not passed
+  if (millis() - lastBlinkTime >= BLINK_INTERVAL && !passed) {
+    lastBlinkTime = millis();
+    yellowBlinkState = !yellowBlinkState;
+    pixels.fill(yellowBlinkState ? blinkColor : PXBLACK);
+    pixels.show();
+  }
+  // delay(12000);
+  // servo3.write(60);
 
 }
