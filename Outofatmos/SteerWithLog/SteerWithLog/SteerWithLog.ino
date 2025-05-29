@@ -96,7 +96,7 @@ const unsigned long BLINK_INTERVAL = 500;  // Blink every 500ms
 #define RFM95_CS 16
 #define RFM95_RST 17
 #define RFM95_INT 21
-#define RFM95_FREQ 921.325
+#define RFM95_FREQ 921.725
 
 
 
