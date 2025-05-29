@@ -14,7 +14,6 @@ double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
   return R * c;
 }
 
-// === Main Data Creation Function ===
 String createDataString() {
   // --- Sensor Readings ---
   int azimuth = qmc.getAzimuth();
@@ -24,6 +23,17 @@ String createDataString() {
   float gpsSpeedMps = 0.0;
   bool gpsFix = gps.location.isValid();
 
+  // Get UTC time from GPS
+  int hour = 0, minute = 0, second = 0;
+  if (gps.time.isValid()) {
+    hour = gps.time.hour();
+    minute = gps.time.minute();
+    second = gps.time.second();
+
+    // Convert UTC to GMT+7
+    hour = (hour + 7) % 24;
+  }
+
   if (gpsFix) {
     latitude = gps.location.lat();
     longitude = gps.location.lng();
@@ -31,7 +41,7 @@ String createDataString() {
     gpsSpeedMps = gps.speed.mps();
   }
 
-  // === Get current time ===
+  // === Get current time in millis ===
   unsigned long currentTime = millis();
 
   // === Calculate distance to target ===
@@ -53,18 +63,34 @@ String createDataString() {
     lastAltitudeTime = currentTime;
   }
 
+  // === Read acceleration ===
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+  float accelX = a.acceleration.x;
+  float accelY = a.acceleration.y;
+  float accelZ = a.acceleration.z;
+  float accelTotal = sqrt(accelX * accelX + accelY * accelY + accelZ * accelZ);
+
+  // === Format time string HH:MM:SS ===
+  char timeString[9];
+  snprintf(timeString, sizeof(timeString), "%02d:%02d:%02d", hour, minute, second);
+
   // === Create CSV-formatted string ===
   String dataString = "";
-  dataString += String(currentTime);          dataString += ",";
+  dataString += String(timeString);           dataString += ",";
   dataString += String(latitude, 6);          dataString += ",";
   dataString += String(longitude, 6);         dataString += ",";
   dataString += String(altitude, 2);          dataString += ",";
-  dataString += String(azimuth);              dataString += ",";
+  dataString += String(azimuth);               dataString += ",";
   dataString += String(distanceToTarget, 2);  dataString += ",";
   dataString += String(gpsSpeedMps, 2);       dataString += ",";
-  dataString += String(pressure, 2);          dataString += ",";
-  dataString += String(temperature, 2);       dataString += ",";
-  dataString += String(verticalVelocity, 2);
+  dataString += String(pressure, 2);           dataString += ",";
+  dataString += String(temperature, 2);        dataString += ",";
+  dataString += String(verticalVelocity, 2);   dataString += ",";
+  dataString += String(accelX, 2);             dataString += ",";
+  dataString += String(accelY, 2);             dataString += ",";
+  dataString += String(accelZ, 2);             dataString += ",";
+  dataString += String(accelTotal, 2);
 
   return dataString;
 }
