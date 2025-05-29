@@ -8,7 +8,7 @@ void blinkPixelForPhase() {
     if (currentPhase == "Waiting") {
       // Blink Blue
       if (yellowBlinkState) {
-        pixels.fill(PXBLUE);
+        pixels.fill(PXYELLOW);
       } else {
         pixels.fill(PXBLACK);
       }

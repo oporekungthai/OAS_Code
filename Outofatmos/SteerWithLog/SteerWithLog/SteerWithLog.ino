@@ -69,7 +69,7 @@ SimpleKalmanFilter kalmanRoll(1, 1, 0.01);
 #define SD_CS_PIN 25
 
 // --- File Naming and Logging Interval ---
-const unsigned long LOG_INTERVAL = 30000;     // Log every 5 seconds
+const unsigned long LOG_INTERVAL = 2000;     // Log every 5 seconds
 const unsigned long FILE_INTERVAL = 10000;     // Log every 5 seconds
 unsigned long lastLogTime = 0;
 unsigned long fileStartTime = 0;
@@ -185,14 +185,14 @@ void setup() {
     while (1);
   }
 
-  rf95.setFrequency(RFM95_FREQ); // 921.325 MHz
+  rf95.setFrequency(RFM95_FREQ); 
   rf95.setTxPower(23, false);    // Max power
   rf95.setSpreadingFactor(9);    // SF9 (can be 6–12)
   rf95.setSignalBandwidth(125000); // 125 kHz
-  rf95.setCodingRate4(5);        // 4/5 coding rate
+  rf95.setCodingRate4(8);        // 4/5 coding rate
 
 
-  // rf95.spiWrite(0x39, 0x34);
+  // rf95.spiWrite(0x39, 0x12);
 
   // servoLeft.attach(SERVO_LEFT_PIN);
   // servoRight.attach(SERVO_RIGHT_PIN);

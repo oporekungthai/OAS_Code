@@ -21,9 +21,8 @@ bool checkDeployment() {
 // }
 
 void deployCanSat() {
-  Deployer.write(270);
-  delay(1000);  // released?
-  Deployer.write(0);
+  Deployer.write(60);
+  delay(200);  // released?
 }
 
 

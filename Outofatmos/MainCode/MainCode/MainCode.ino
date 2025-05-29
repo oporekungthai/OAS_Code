@@ -35,7 +35,7 @@ Servo Deployer;
 #define TILT_THRESHOLD_DEG   45.0     // Degrees
 #define ACCEL_DROP_THRESHOLD 2.0     // Gs
 #define ALTITUDE_DROP_MARGIN 2.0      // Meters (how much lower than peak before apogee is detected)
-#define MIN_TIME_SINCE_DEPLOY 5    // ms after deployment before checking apogee
+#define MIN_TIME_SINCE_DEPLOY 5000    // ms after deployment before checking apogee
 #define RELEASE_ACCEL 30.0
 float maxAltitude = -9999; // -9999 due to possible error ig
 unsigned long deployTime = 0; // Set this when deployment is detected
@@ -69,10 +69,12 @@ String currentPhase = "Waiting";
 
 
 // --- PD Control Constants ---
+float lastError = 0;
 float Kp = 0.6;
 float Kd = 0.0;
-float lastError = 0;
 
+unsigned long lastSteerTime = 0;
+const unsigned long STEER_INTERVAL = 1000; // 1 second
 // --- OLED Setup ---
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 32
@@ -219,9 +221,9 @@ void setup() {
   rf95.setTxPower(23, false);    // Max power
   rf95.setSpreadingFactor(9);    // SF9 (can be 6–12)
   rf95.setSignalBandwidth(125000); // 125 kHz
-  rf95.setCodingRate4(5);        // 4/5 coding rate
+  rf95.setCodingRate4(8);        // 4/5 coding rate
 
-
+  
 
   servoLeft.attach(SERVO_LEFT_PIN);
   servoRight.attach(SERVO_RIGHT_PIN);
@@ -296,7 +298,7 @@ void loop() {
     lastLogTime = millis();
   }
   
-  displaySensorData();
+  // displaySensorData();
   blinkPixelForPhase();
   smartDelay(200);
 }

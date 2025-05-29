@@ -1,78 +1,70 @@
+// === Globals ===
+float lastAltitude = 0.0;
+unsigned long lastAltitudeTime = 0;
+
+// === Distance Calculation Function ===
+double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+  const double R = 6371000.0; // Earth radius in meters
+  double dLat = radians(lat2 - lat1);
+  double dLon = radians(lon2 - lon1);
+  double a = sin(dLat / 2) * sin(dLat / 2) +
+             cos(radians(lat1)) * cos(radians(lat2)) *
+             sin(dLon / 2) * sin(dLon / 2);
+  double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+  return R * c;
+}
+
+// === Main Data Creation Function ===
 String createDataString() {
-    // --- Sensor Readings ---
-    int azimuth = qmc.getAzimuth();
+  // --- Sensor Readings ---
+  int azimuth = qmc.getAzimuth();
 
-    // === Cache GPS values ===
-    float latitude = 0.0, longitude = 0.0, altitude = 0.0;
-    float gpsSpeedMps = 0.0;
-    bool gpsFix = gps.location.isValid();
+  // === Cache GPS values ===
+  float latitude = 0.0, longitude = 0.0, altitude = 0.0;
+  float gpsSpeedMps = 0.0;
+  bool gpsFix = gps.location.isValid();
 
-    if (gpsFix) {
-        latitude = gps.location.lat();
-        longitude = gps.location.lng();
-        altitude = gps.altitude.meters();
-        if (gps.speed.isValid()) {
-            gpsSpeedMps = gps.speed.knots() * 0.51444; // knots to m/s
-        }
-    }
+  if (gpsFix) {
+    latitude = gps.location.lat();
+    longitude = gps.location.lng();
+    altitude = gps.altitude.meters();
+    gpsSpeedMps = gps.speed.mps();
+  }
 
-    // === IMU readings ===
-    sensors_event_t a, g, temp;
-    mpu.getEvent(&a, &g, &temp);
+  // === Get current time ===
+  unsigned long currentTime = millis();
 
-    float accelX = a.acceleration.x;
-    float accelY = a.acceleration.y;
-    float accelZ = a.acceleration.z;
-    float accelMagnitude = sqrt(accelX * accelX + accelY * accelY + accelZ * accelZ);
+  // === Calculate distance to target ===
+  float distanceToTarget = 0.0;
+  if (gpsFix) {
+    distanceToTarget = calculateDistance(latitude, longitude, targetLat, targetLon);
+  }
 
-    float roll = atan2(accelY, accelZ) * 180.0 / PI;
-    float pitch = atan2(-accelX, sqrt(accelY * accelY + accelZ * accelZ)) * 180.0 / PI;
+  // === Get pressure and temperature ===
+  float pressure = bmp.readPressure();
+  float temperature = bmp.readTemperature();
 
-    float filteredPitch = kalmanPitch.updateEstimate(pitch);
-    float filteredRoll = kalmanRoll.updateEstimate(roll);
+  // === Calculate vertical velocity (altitude rate) ===
+  float verticalVelocity = 0.0;
+  float dt = (currentTime - lastAltitudeTime) / 1000.0;
+  if (dt > 0.1) {
+    verticalVelocity = (altitude - lastAltitude) / dt;
+    lastAltitude = altitude;
+    lastAltitudeTime = currentTime;
+  }
 
-    float bmpAltitude = bmp.readAltitude(SEALEVELPRESSURE_HPA);
+  // === Create CSV-formatted string ===
+  String dataString = "";
+  dataString += String(currentTime);          dataString += ",";
+  dataString += String(latitude, 6);          dataString += ",";
+  dataString += String(longitude, 6);         dataString += ",";
+  dataString += String(altitude, 2);          dataString += ",";
+  dataString += String(azimuth);              dataString += ",";
+  dataString += String(distanceToTarget, 2);  dataString += ",";
+  dataString += String(gpsSpeedMps, 2);       dataString += ",";
+  dataString += String(pressure, 2);          dataString += ",";
+  dataString += String(temperature, 2);       dataString += ",";
+  dataString += String(verticalVelocity, 2);
 
-    // === Calculate Bearing & Distance (if GPS is valid) ===
-    float targetBearing = 0.0;
-    float distanceToTarget = 0.0;
-    if (gpsFix) {
-        targetBearing = calculateBearing(latitude, longitude, targetLat, targetLon);
-        distanceToTarget = calculateDistance(latitude, longitude, targetLat, targetLon);
-    }
-
-    // === Estimate vertical velocity from altitude change ===
-    float verticalVelocity = 0.0;
-    unsigned long currentTime = millis();
-    float dt = (currentTime - lastAltitudeTime) / 1000.0; // ms to sec
-    if (dt > 0.01) {
-        verticalVelocity = (altitude - lastAltitude) / dt;
-        lastAltitude = altitude;
-        lastAltitudeTime = currentTime;
-    }
-
-    // === Build the data string ===
-    String dataString = "";
-    dataString += "Phase:" + currentPhase + ",";
-    dataString += "Time:" + String(millis()) + ",";
-
-    if (gpsFix) {
-        dataString += "Lat:" + String(latitude, 6) + ",";
-        dataString += "Lon:" + String(longitude, 6) + ",";
-        dataString += "Alt:" + String(altitude, 2) + ",";
-    } else {
-        dataString += "Lat:N/A,Lon:N/A,Alt:N/A,";
-    }
-
-    dataString += "Az:" + String(azimuth) + ",";
-    dataString += "Pitch:" + String(filteredPitch, 2) + ",";
-    dataString += "Roll:" + String(filteredRoll, 2) + ",";
-    dataString += "BmpAlt:" + String(bmpAltitude, 2) + ",";
-    dataString += "Bearing:" + String(targetBearing, 2) + ",";
-    dataString += "DistToTgt:" + String(distanceToTarget, 2) + ",";
-    dataString += "Vel:" + String(verticalVelocity, 2) + ",";
-    dataString += "GpsVel:" + String(gpsSpeedMps, 2) + ",";
-    dataString += "AccelMag:" + String(accelMagnitude, 2);
-
-    return dataString;
+  return dataString;
 }

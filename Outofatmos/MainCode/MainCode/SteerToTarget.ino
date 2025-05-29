@@ -1,14 +1,21 @@
-void steerToTarget() {
-  if (gps.location.isValid()) {
-    float currentLat = gps.location.lat();
-    float currentLon = gps.location.lng();
-    float currentHeading = qmc.getAzimuth();
+// void steerToTarget() {
+//   static unsigned long lastPIDTime = 0;
+//   const unsigned long PID_INTERVAL = 1000;  // 1 second
 
-    float targetBearing = calculateBearing(currentLat, currentLon, targetLat, targetLon);
-    int servoAngle = calculateSteeringAngle(targetBearing, currentHeading);
+//   if (millis() - lastPIDTime >= PID_INTERVAL && gps.location.isValid()) {
+//     lastPIDTime = millis();  // Update timestamp
 
-    // Apply same angle to both since they're side-swapped
-    servoLeft.write(servoAngle);
-    servoRight.write(servoAngle);
-  }
-}
+//     float currentLat = gps.location.lat();
+//     float currentLon = gps.location.lng();
+//     float currentHeading = qmc.getAzimuth();
+
+//     float targetBearing = calculateBearing(currentLat, currentLon, targetLat, targetLon);
+//     int steeringOffset = calculateSteeringAngle(targetBearing, currentHeading) - 90;
+
+//     int leftServo = 90 + steeringOffset;
+//     int rightServo = 90 - steeringOffset;
+
+//     servoLeft.write(constrain(leftServo, 0, 180));
+//     servoRight.write(constrain(rightServo, 0, 180));
+//   }
+// }
