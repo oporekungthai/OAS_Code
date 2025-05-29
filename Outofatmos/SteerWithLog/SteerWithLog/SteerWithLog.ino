@@ -114,7 +114,6 @@ void setup() {
   pixels.setBrightness(50); // Set brightness
   pixels.fill(PXBLUE);      // Blue: Initializing
   pixels.show();
-  Serial.begin(115200);
 
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 
@@ -226,7 +225,7 @@ void loop() {
     // logData(); // Optional
   }
 
-  smartDelay(200);
+  // smartDelay(200);
 }
 
 

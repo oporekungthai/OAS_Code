@@ -1,31 +1,49 @@
 String createDataString() {
-    // Read all the sensor values *before* creating the string.
-    int azimuth = qmc.getAzimuth();
-    float latitude = gps.location.isValid() ? gps.location.lat() : 0.0;
-    float longitude = gps.location.isValid() ? gps.location.lng() : 0.0;
-    float altitude = gps.location.isValid() ? gps.altitude.meters() : 0.0;
-    bool gpsFix = gps.location.isValid();
-     sensors_event_t a, g, temp;
-    mpu.getEvent(&a, &g, &temp);
-    float roll = atan2(a.acceleration.y, a.acceleration.z) * 180.0 / PI;
-    float pitch = atan2(-a.acceleration.x, sqrt(a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z)) * 180.0 / PI;
-    float filteredPitch = kalmanPitch.updateEstimate(pitch);
-    float filteredRoll = kalmanRoll.updateEstimate(roll);
-    float bmpAltitude = bmp.readAltitude(SEALEVELPRESSURE_HPA);
+  // === Compass Azimuth ===
+  int azimuth = qmc.getAzimuth();
 
-    // Format the data string
-    String dataString = "";
-     if (gpsFix) {  //Only send GPS data if we have a fix
-       dataString += String(latitude, 6) + ",";
-       dataString += String(longitude, 6) + ",";
-       dataString += String(altitude) + ",";
-    } else {
-        dataString += "N/A,N/A,N/A,";  // Indicate no GPS fix
-    }
-    dataString += String(azimuth) + ",";
-    dataString += String(filteredPitch) + ",";
-    dataString += String(filteredRoll) + ",";
-    dataString += String(bmpAltitude);
+  // === GPS ===
+  bool gpsFix = gps.location.isValid();
+  float latitude = gpsFix ? gps.location.lat() : 0.0;
+  float longitude = gpsFix ? gps.location.lng() : 0.0;
+  float gpsAltitude = gpsFix ? gps.altitude.meters() : 0.0;
 
-    return dataString;
+  // === Target Bearing and Distance ===
+  float bearingToTarget = 0.0;
+  float distanceToTarget = 0.0;
+  if (gpsFix && targetSelected) {
+    bearingToTarget = TinyGPSPlus::courseTo(latitude, longitude, targetLat, targetLon);
+    distanceToTarget = TinyGPSPlus::distanceBetween(latitude, longitude, targetLat, targetLon);
+  }
+
+  // === IMU Data ===
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+  float rawRoll = atan2(a.acceleration.y, a.acceleration.z) * 180.0 / PI;
+  float rawPitch = atan2(-a.acceleration.x, sqrt(a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z)) * 180.0 / PI;
+  float filteredPitch = kalmanPitch.updateEstimate(rawPitch);
+  float filteredRoll = kalmanRoll.updateEstimate(rawRoll);
+
+  // === BMP Altitude ===
+  float bmpAltitude = bmp.readAltitude(SEALEVELPRESSURE_HPA);
+
+  // === Compose String ===
+  String dataString = "";
+
+  if (gpsFix) {
+    dataString += String(latitude, 6) + ",";
+    dataString += String(longitude, 6) + ",";
+    dataString += String(gpsAltitude, 2) + ",";
+    dataString += String(distanceToTarget, 2) + ",";
+    dataString += String(bearingToTarget, 2) + ",";
+  } else {
+    dataString += "N/A,N/A,N/A,N/A,N/A,";
+  }
+
+  dataString += String(azimuth) + ",";
+  dataString += String(filteredPitch, 2) + ",";
+  dataString += String(filteredRoll, 2) + ",";
+  dataString += String(bmpAltitude, 2);
+
+  return dataString;
 }
