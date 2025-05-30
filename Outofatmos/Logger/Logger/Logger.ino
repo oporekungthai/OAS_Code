@@ -4,7 +4,7 @@
 const int chipSelect = 25; // Replace with your CS pin
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
   while (!Serial) ; // Wait for serial connection
 
   if (!SD.begin(chipSelect)) {

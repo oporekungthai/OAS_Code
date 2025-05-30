@@ -1,9 +1,9 @@
 bool checkApogeeAndTilt() {
   // Priority 1: Check minimum time since deploy
-  if (CHECK_MIN_TIME && (millis() - deployTime < MIN_TIME_SINCE_DEPLOY)) {
-    // Minimum time NOT passed yet, skip all other checks
-    return false;
-  }
+  // if (CHECK_MIN_TIME && (millis() - deployTime < MIN_TIME_SINCE_DEPLOY)) {
+  //   // Minimum time NOT passed yet, skip all other checks
+  //   return false;
+  // }
 
   // Now perform sensor readings and checks
 

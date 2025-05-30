@@ -6,7 +6,6 @@ void blinkPixelForPhase() {
     yellowBlinkState = !yellowBlinkState;
 
     if (currentPhase == "Waiting") {
-      // Blink Blue
       if (yellowBlinkState) {
         pixels.fill(PXYELLOW);
       } else {
@@ -15,7 +14,6 @@ void blinkPixelForPhase() {
       pixels.show();
     }
     else if (currentPhase == "Deployed") {
-      // Blink Red
       if (yellowBlinkState) {
         pixels.fill(PXRED);
       } else {
@@ -24,16 +22,14 @@ void blinkPixelForPhase() {
       pixels.show();
     }
     else if (currentPhase == "Tilting") {
-      // Blink Yellow
       if (yellowBlinkState) {
-        pixels.fill(PXYELLOW);
+        pixels.fill(PXRED);
       } else {
         pixels.fill(PXBLACK);
       }
       pixels.show();
     }
     else if (currentPhase == "CanSatDeployed") {
-      // Blink White
       if (yellowBlinkState) {
         pixels.fill(PXWHITE);
       } else {
@@ -42,12 +38,10 @@ void blinkPixelForPhase() {
       pixels.show();
     }
     else if (currentPhase == "Steering") {
-      // Solid Green (no blink)
       pixels.fill(PXGREEN);
       pixels.show();
     }
     else {
-      // Default solid white if unknown phase
       pixels.fill(PXWHITE);
       pixels.show();
     }

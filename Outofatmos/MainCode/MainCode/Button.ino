@@ -16,13 +16,13 @@ void checkButtonAndSetTarget() {
       }
 
       // OLED Display
-      display.clearDisplay();
-      display.setCursor(0, 0);
-      display.print("New Target Set:");
-      display.setCursor(0, 10);
-      display.print("Lat: "); display.println(targetLat, 6);
-      display.print("Lon: "); display.println(targetLon, 6);
-      display.display();
+      // display.clearDisplay();
+      // display.setCursor(0, 0);
+      // display.print("New Target Set:");
+      // display.setCursor(0, 10);
+      // display.print("Lat: "); display.println(targetLat, 6);
+      // display.print("Lon: "); display.println(targetLon, 6);
+      // display.display();
 
       // Serial Monitor
 

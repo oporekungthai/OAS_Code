@@ -30,12 +30,12 @@ Servo Deployer;
 #define CHECK_ACCEL_DROP    false
 #define CHECK_ALTITUDE_DROP false
 #define CHECK_MIN_TIME      true
-
+#define MIN_TIME_BEFORE_APOGEE_CHECK 7500
 // --- Threshold values ---
-#define TILT_THRESHOLD_DEG   45.0     // Degrees
+#define TILT_THRESHOLD_DEG   60.0     // Degrees
 #define ACCEL_DROP_THRESHOLD 2.0     // Gs
 #define ALTITUDE_DROP_MARGIN 2.0      // Meters (how much lower than peak before apogee is detected)
-#define MIN_TIME_SINCE_DEPLOY 5000    // ms after deployment before checking apogee
+// #define MIN_TIME_SINCE_DEPLOY 8000    // ms after deployment before checking apogee
 #define RELEASE_ACCEL 30.0
 float maxAltitude = -9999; // -9999 due to possible error ig
 unsigned long deployTime = 0; // Set this when deployment is detected
@@ -43,7 +43,7 @@ unsigned long deployTime = 0; // Set this when deployment is detected
 // TIME FALL BACK JUST IN CASE
 
 #define CHECK_MAX_TIME_BEFORE_DEPLOY true
-#define MAX_TIME_BEFORE_DEPLOY 12000 // ms 
+#define MAX_TIME_BEFORE_DEPLOY 10000 // ms 
 
 // ================================================================
 // Shooting Target aka. lockheed martin please fund me so that we could invade russia with this one
@@ -74,7 +74,7 @@ float Kp = 0.6;
 float Kd = 0.0;
 
 unsigned long lastSteerTime = 0;
-const unsigned long STEER_INTERVAL = 1000; // 1 second
+const unsigned long STEER_INTERVAL = 500; // 1 second
 // --- OLED Setup ---
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 32
@@ -252,12 +252,17 @@ void loop() {
     sendData("Rocket Deployed");
     logData();
   }
-
   if (rocketDeployed && !tiltReady) {
-    bool apogeeDetected = checkApogeeAndTilt();
-    bool timeoutReached = CHECK_MAX_TIME_BEFORE_DEPLOY && (millis() - deployTime > MAX_TIME_BEFORE_DEPLOY);
+    bool minTimeElapsed = CHECK_MIN_TIME && (millis() - deployTime >= MIN_TIME_BEFORE_APOGEE_CHECK);
+    bool apogeeDetected = false;
+    bool timeoutReached = false;
 
-    if (apogeeDetected || timeoutReached) {
+    if (minTimeElapsed) {
+      apogeeDetected = checkApogeeAndTilt();
+      timeoutReached = CHECK_MAX_TIME_BEFORE_DEPLOY && (millis() - deployTime > MAX_TIME_BEFORE_DEPLOY);
+    }
+
+    if ((apogeeDetected || timeoutReached) && minTimeElapsed) {
       tiltReady = true;
       currentPhase = "Tilting";
       if (apogeeDetected && timeoutReached) {
@@ -280,7 +285,7 @@ void loop() {
     logData();
   }
 
-  if (cansatDeployed && millis() - deployTime >= 3000 && !steeringStarted) {
+  if (cansatDeployed && millis() - deployTime >= 3500 && !steeringStarted) {
     steeringStarted = true;
     currentPhase = "Steering";
     sendData("Steering Started");

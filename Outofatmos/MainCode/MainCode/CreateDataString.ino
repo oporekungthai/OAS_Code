@@ -4,7 +4,7 @@ unsigned long lastAltitudeTime = 0;
 
 // === Distance Calculation Function ===
 double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-  const double R = 6371000.0; // Earth radius in meters
+  const double R = 6371000.0;
   double dLat = radians(lat2 - lat1);
   double dLon = radians(lon2 - lon1);
   double a = sin(dLat / 2) * sin(dLat / 2) +
@@ -14,6 +14,7 @@ double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
   return R * c;
 }
 
+// === Main Function to Create CSV Data String ===
 String createDataString() {
   // --- Sensor Readings ---
   int azimuth = qmc.getAzimuth();
@@ -29,9 +30,7 @@ String createDataString() {
     hour = gps.time.hour();
     minute = gps.time.minute();
     second = gps.time.second();
-
-    // Convert UTC to GMT+7
-    hour = (hour + 7) % 24;
+    hour = (hour + 7) % 24; // Convert UTC to GMT+7
   }
 
   if (gpsFix) {
@@ -54,7 +53,7 @@ String createDataString() {
   float pressure = bmp.readPressure();
   float temperature = bmp.readTemperature();
 
-  // === Calculate vertical velocity (altitude rate) ===
+  // === Calculate vertical velocity ===
   float verticalVelocity = 0.0;
   float dt = (currentTime - lastAltitudeTime) / 1000.0;
   if (dt > 0.1) {
@@ -71,26 +70,54 @@ String createDataString() {
   float accelZ = a.acceleration.z;
   float accelTotal = sqrt(accelX * accelX + accelY * accelY + accelZ * accelZ);
 
+  // === Calculate bearing to target using TinyGPS++ ===
+  float bearingToTarget = 0.0;
+  String steerDirection = "UNKNOWN";
+  if (gpsFix) {
+    bearingToTarget = TinyGPSPlus::courseTo(latitude, longitude, targetLat, targetLon);
+
+    // Normalize heading and bearing to 0–360
+    float heading = fmod(azimuth + 360, 360);
+    float targetBearing = fmod(bearingToTarget + 360, 360);
+
+    // Calculate smallest angle difference
+    float diff = targetBearing - heading;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+
+    // Decide steer direction
+    if (diff > 5) {
+      steerDirection = "RIGHT";
+    } else if (diff < -5) {
+      steerDirection = "LEFT";
+    } else {
+      steerDirection = "STRAIGHT";
+    }
+  }
+
   // === Format time string HH:MM:SS ===
   char timeString[9];
   snprintf(timeString, sizeof(timeString), "%02d:%02d:%02d", hour, minute, second);
 
   // === Create CSV-formatted string ===
   String dataString = "";
-  dataString += String(timeString);           dataString += ",";
-  dataString += String(latitude, 6);          dataString += ",";
-  dataString += String(longitude, 6);         dataString += ",";
-  dataString += String(altitude, 2);          dataString += ",";
+  dataString += String(timeString);            dataString += ",";
+  dataString += String(latitude, 6);           dataString += ",";
+  dataString += String(longitude, 6);          dataString += ",";
+  dataString += String(altitude, 2);           dataString += ",";
   dataString += String(azimuth);               dataString += ",";
-  dataString += String(distanceToTarget, 2);  dataString += ",";
-  dataString += String(gpsSpeedMps, 2);       dataString += ",";
+  dataString += String(distanceToTarget, 2);   dataString += ",";
+  dataString += String(gpsSpeedMps, 2);        dataString += ",";
   dataString += String(pressure, 2);           dataString += ",";
   dataString += String(temperature, 2);        dataString += ",";
   dataString += String(verticalVelocity, 2);   dataString += ",";
   dataString += String(accelX, 2);             dataString += ",";
   dataString += String(accelY, 2);             dataString += ",";
   dataString += String(accelZ, 2);             dataString += ",";
-  dataString += String(accelTotal, 2);
+  dataString += String(accelTotal, 2);         dataString += ",";
+  dataString += String(bearingToTarget, 2);    dataString += ",";
+  dataString += steerDirection;                dataString += ",";
+  dataString += currentPhase;                  // ← add this line
 
   return dataString;
 }
