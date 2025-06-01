@@ -30,13 +30,13 @@ Servo Deployer;
 #define CHECK_ACCEL_DROP    false
 #define CHECK_ALTITUDE_DROP false
 #define CHECK_MIN_TIME      true
-#define MIN_TIME_BEFORE_APOGEE_CHECK 7500
+#define MIN_TIME_BEFORE_APOGEE_CHECK 5000
 // --- Threshold values ---
 #define TILT_THRESHOLD_DEG   60.0     // Degrees
 #define ACCEL_DROP_THRESHOLD 2.0     // Gs
 #define ALTITUDE_DROP_MARGIN 2.0      // Meters (how much lower than peak before apogee is detected)
 // #define MIN_TIME_SINCE_DEPLOY 8000    // ms after deployment before checking apogee
-#define RELEASE_ACCEL 30.0
+#define RELEASE_ACCEL 15.0
 float maxAltitude = -9999; // -9999 due to possible error ig
 unsigned long deployTime = 0; // Set this when deployment is detected
 

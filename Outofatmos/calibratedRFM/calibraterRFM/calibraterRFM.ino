@@ -83,7 +83,7 @@ void setup() {
   pixels.fill(PXBLUE);      // Blue: Initializing
   pixels.show();
  
-
+  Serial.begin(115200);
   // --- Initialize OLED ---
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
     pixels.fill(PXRED); // Red for OLED failure
@@ -222,8 +222,17 @@ String createDataString() {
     float longitude = gps.location.isValid() ? gps.location.lng() : 0.0;
     float altitude = gps.location.isValid() ? gps.altitude.meters() : 0.0;
     bool gpsFix = gps.location.isValid();
-     sensors_event_t a, g, temp;
+
+    sensors_event_t a, g, temp;
     mpu.getEvent(&a, &g, &temp);
+
+    float zAccel = a.acceleration.z;
+    float totalAccel = sqrt(
+        a.acceleration.x * a.acceleration.x +
+        a.acceleration.y * a.acceleration.y +
+        a.acceleration.z * a.acceleration.z
+    );
+
     float roll = atan2(a.acceleration.y, a.acceleration.z) * 180.0 / PI;
     float pitch = atan2(-a.acceleration.x, sqrt(a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z)) * 180.0 / PI;
     float filteredPitch = kalmanPitch.updateEstimate(pitch);
@@ -232,80 +241,85 @@ String createDataString() {
 
     // Format the data string
     String dataString = "";
-     if (gpsFix) {  //Only send GPS data if we have a fix
-       dataString += String(latitude, 6) + ",";
-       dataString += String(longitude, 6) + ",";
-       dataString += String(altitude) + ",";
+
+    if (gpsFix) {
+        dataString += String(latitude, 6) + ",";
+        dataString += String(longitude, 6) + ",";
+        dataString += String(altitude) + ",";
     } else {
-        dataString += "N/A,N/A,N/A,";  // Indicate no GPS fix
+        dataString += "N/A,N/A,N/A,";
     }
+
     dataString += String(azimuth) + ",";
     dataString += String(filteredPitch) + ",";
     dataString += String(filteredRoll) + ",";
-    dataString += String(bmpAltitude);
+    dataString += String(bmpAltitude) + ",";
+    dataString += String(zAccel, 2) + ",";
+    dataString += String(totalAccel, 2);
 
     return dataString;
 }
 
-void displaySensorData() {
 
-    // Read all sensor data *before* displaying.  This is important
-    // to minimize delays *within* the OLED update process.
+void displaySensorData() {
     int azimuth = qmc.getAzimuth();
 
     float latitude = 0.0;
     float longitude = 0.0;
     float altitude = 0.0;
-    bool gpsFix = gps.location.isValid(); // Get fix status
+    bool gpsFix = gps.location.isValid();
 
     if (gpsFix) {
         latitude = gps.location.lat();
         longitude = gps.location.lng();
         altitude = gps.altitude.meters();
-          // Set NeoPixel to GREEN if we have a fix
-         pixels.fill(PXGREEN);
-         pixels.show();
-    }
-     else
-    {
-        pixels.fill(PXBLACK); // Set NeoPixel to off if no fix
+
+        pixels.fill(PXGREEN);
+        pixels.show();
+    } else {
+        pixels.fill(PXBLACK);
         pixels.show();
     }
 
     sensors_event_t a, g, temp;
     mpu.getEvent(&a, &g, &temp);
-    float roll = atan2(a.acceleration.y, a.acceleration.z) * 180.0 / PI;
-    float pitch = atan2(-a.acceleration.x, sqrt(a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z)) * 180.0 / PI;
-    float filteredPitch = kalmanPitch.updateEstimate(pitch);
-    float filteredRoll = kalmanRoll.updateEstimate(roll);
+
+    // Get Z-axis accel and magnitude
+    float zAccel = a.acceleration.z;
+    float totalAccel = sqrt(
+        a.acceleration.x * a.acceleration.x +
+        a.acceleration.y * a.acceleration.y +
+        a.acceleration.z * a.acceleration.z
+    );
 
     float bmpAltitude = bmp.readAltitude(SEALEVELPRESSURE_HPA);
 
-    // --- Display Data on OLED ---
+    // Display on OLED
     display.clearDisplay();
     display.setCursor(0, 0);
 
-    // Display QMC5883L data
+    // Azimuth & GPS
     display.print(F("Az: ")); display.print(azimuth);
-
-     if (gpsFix) {
-        display.print(F(" (")); display.print(latitude, 2);  display.print(F(","));
+    if (gpsFix) {
+        display.print(F(" ("));
+        display.print(latitude, 2); display.print(F(","));
         display.print(longitude, 2); display.println(F(")"));
     } else {
         display.println(F(" NoFix"));
     }
-    // MPU
-    display.print(F("Pit: ")); display.print(filteredPitch);
-    
-    display.print(F(" Rol: ")); display.println(filteredRoll);
-   
-    // BMP
-    display.print(F("Alt: ")); display.println(bmpAltitude);
-    
 
-    display.display(); // Update the display
+    // Show Z accel and total accel
+    display.print(F("Z: ")); display.print(zAccel, 2); display.print(" m/s2\n");
+    display.print(F("All: ")); display.print(totalAccel, 2); display.print(" m/s2\n");
+    // Serial.print("Z: ");
+    Serial.println(zAccel, 2);
+    // Serial.print("All: "); Serial.println(totalAccel, 2);
+    // Altitude
+    display.print(F("Alt: ")); display.println(bmpAltitude, 1);
 
+    display.display();
 }
+
 
 void logData() {
     char filename[15];
