@@ -4,10 +4,6 @@ Some how in (unofficial) collaboration between The Prince Royal's College School
 Although the gliding phase doesn't work (Because it wasn't even initialized), we did managed to get the data of the entire operation. 
 That also includes the cansat steering vector dicisions
 
-![image](https://github.com/user-attachments/assets/3e3ababc-cf07-4816-9d7b-a3d2618f759f)
-
-
-
 contact me via
 Discord : itsopore2
 Gmail : roryonw@gmail.com 
