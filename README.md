@@ -8,16 +8,14 @@ That also includes the cansat steering vector dicisions
 
 <br>
 <br>
-<br>
-<br>
+
 
 
 <div align="center">
   <img src="https://github.com/user-attachments/assets/a015383d-f600-4d13-bb96-537ffb7df3fe" alt="Descriptive alt text for your image" width="400">
+  The vector dicision data of the cansat on whether were should it steer to matches its target heading
 </div>
 
-<br>
-<br>
 <br>
 <br>
 
