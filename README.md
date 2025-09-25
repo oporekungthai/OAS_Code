@@ -1,7 +1,7 @@
 Out of Atmosphere CANSAT operation codes for 2025 Thailand Cansat Competition.
 
-Although the gliding phase doesn't work (Because it wasn't even initialized), we did manage to log all the data during the entire operation. 
-That also includes the cansat steering vector dicisions
+Although the gliding phase doesn't work (Because it wasn't even initialized), we did manage to log all the data during the entire operation, 
+which includes vectorized cansat steering dicisions
 
 
 
