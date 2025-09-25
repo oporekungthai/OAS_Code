@@ -38,7 +38,7 @@ That also includes the cansat steering vector dicisions
 
 contact me via
 Discord : itsopore2
-Gmail : roryonw@gmail.com 
+Gmail : oporekungthai@gmail.com 
 
 for more informations
 
