@@ -1,7 +1,6 @@
 Out of Atmosphere CANSAT operation codes for 2025 Thailand Cansat Competition.
-Some how in (unofficial) collaboration between The Prince Royal's College and Varee Chiangmai School
 
-Although the gliding phase doesn't work (Because it wasn't even initialized), we did managed to log the data during the entire operation. 
+Although the gliding phase doesn't work (Because it wasn't even initialized), we did manage to log all the data during the entire operation. 
 That also includes the cansat steering vector dicisions
 
 
